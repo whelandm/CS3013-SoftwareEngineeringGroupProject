@@ -1,0 +1,51 @@
+<script type="text/javascript">
+let imgElement = document.getElementById('imageSrc');
+let inputElement = document.getElementById('fileInput');
+inputElement.addEventListener('change', (e) => {
+  imgElement.src = URL.createObjectURL(e.target.files[0]);
+}, false);
+imgElement.onload = function() {
+  let src = cv.imread(imgElement);
+  let dst = src.clone();
+  let mask = 0;
+  console.log("Size" + src.cols*src.rows);
+  // isolate hand
+  for(col=0; col < src.cols; col++){
+    for(row=0; row < src.rows; row++){
+      if(src.data[row * src.cols * src.channels() + col * src.channels() + 2] <= '150'){
+        dst.data[row * src.cols * src.channels() + col * src.channels()] = '0';
+        dst.data[row * src.cols * src.channels() + col * src.channels() + 1] = '0';
+        dst.data[row * src.cols * src.channels() + col * src.channels() + 2] = '0';
+      } else {mask++;}
+    }
+  }
+  console.log("Mask" + mask);
+  // remove red and green
+  for(col=0; col < src.cols; col++){
+    for(row=0; row < src.rows; row++){
+      dst.data[row * src.cols * src.channels() + col * src.channels()] = '0';
+      //dst.data32S[row * src.cols * src.channels() + col * src.channels() + 1] = src.data32S[row * src.cols * src.channels() + col * src.channels() + 1];
+      dst.data[row * src.cols * src.channels() + col * src.channels() + 2] = '0';
+      //dst.data32S[row * src.cols * src.channels() + col * src.channels() + 3] = src.data32S[row * src.cols * src.channels() + col * src.channels() + 3];
+    }
+  }
+  // count coverage
+  let coverage = 0;
+  for(col=0; col < src.cols; col++){
+    for(row=0; row < src.rows; row++){
+      if(dst.data[row * src.cols * src.channels() + col * src.channels() + 1] > '5'){
+        coverage++;
+      }
+    }
+  }
+  console.log("Cover" + coverage);
+  let percent = coverage/mask;
+  console.log("Percentage" + percent);
+  cv.imshow('canvasOutput', dst);
+  src.delete(); dst.delete();
+};
+function onOpenCvReady() {
+  document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+}
+</script>
+<script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
